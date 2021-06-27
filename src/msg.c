@@ -259,14 +259,16 @@ static int do_mroute6(struct ipc_msg *msg)
 		if (mif < 0)
 			break;
 
-		if (inet_pton(AF_INET6, msg->argv[pos++], &mroute.source.sin6_addr) <= 0) {
-			smclog(LOG_DEBUG, "Invalid IPv6 source address");
+		const char* source_addr_str = msg->argv[pos++];
+		if (inet_pton(AF_INET6, source_addr_str, &mroute.source.sin6_addr) <= 0) {
+			smclog(LOG_ERR, "Invalid IPv6 source address: %s", source_addr_str);
 			return 1;
 		}
 
-		if (inet_pton(AF_INET6, msg->argv[pos++], &mroute.group.sin6_addr) <= 0 ||
+		const char* group_addr_str = msg->argv[pos++];
+		if (inet_pton(AF_INET6, group_addr_str, &mroute.group.sin6_addr) <= 0 ||
 		    !IN6_IS_ADDR_MULTICAST(&mroute.group.sin6_addr)) {
-			smclog(LOG_DEBUG, "Invalid IPv6 group address");
+			smclog(LOG_ERR, "Invalid IPv6 group address: %s", group_addr_str);
 			return 1;
 		}
 
@@ -278,7 +280,7 @@ static int do_mroute6(struct ipc_msg *msg)
 		 */
 		if (msg->cmd == 'a') {
 			if (pos >= msg->count) {
-				smclog(LOG_DEBUG, "Missing outbound interface");
+				smclog(LOG_ERR, "Missing outbound interface");
 				return 1;
 			}
 
